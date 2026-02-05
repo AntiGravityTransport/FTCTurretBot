@@ -37,6 +37,7 @@ public class TeleOpMode30511 extends OpMode {
     private DcMotorEx bottomLauncher = null;
     private DcMotor intake = null;
     private DcMotor Feeder = null;
+    private Odometry robotOdometry;
     private CRServo right_rotator = null;
     private CRServo left_rotator = null;
     private CRServo right_turret_angler = null;
@@ -146,6 +147,10 @@ public class TeleOpMode30511 extends OpMode {
         Feeder.setDirection(DcMotorSimple.Direction.FORWARD);
 
         /*
+         * Odometry
+         */
+        robotOdometry = new Odometry(hardwareMap);
+        /*
          * Tell the driver that initialization is complete.
          */
         telemetry.addData("Status", "Initialized");
@@ -233,18 +238,28 @@ public class TeleOpMode30511 extends OpMode {
         }
 
 
-         * Now we call our "Launch" function.
+         /* Now we call our "Launch" function.
+
+          */
 
         launchTop(gamepad1.leftBumperWasPressed());
         launchBottom(gamepad1.leftBumperWasPressed());
 
 
-         * Show the state and motor powers
+         /* Show the state and motor powers
+
+          */
 
         telemetry.addData("State", topLaunchState);
         telemetry.addData("launch distance", launcherDistance);
         telemetry.addData("Top Launcher Velocity", topLauncher.getVelocity());
         telemetry.addData("Bottom Launcher Velocity", bottomLauncher.getVelocity());
+
+        Pose2D pos = robotOdometry.getPose();
+        telemetry.addData("X (mm)", pos.getX(DistanceUnit.MM));
+        telemetry.addData("Y (mm)", pos.getY(DistanceUnit.MM));
+        telemetry.addData("Heading", pos.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("Pinpoint Status", robotOdometry.getStatus());
 
     }
 
