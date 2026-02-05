@@ -1,26 +1,3 @@
-/*   MIT License
- *   Copyright (c) [2025] [Base 10 Assets, LLC]
- *
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
-
- *   The above copyright notice and this permission notice shall be included in all
- *   copies or substantial portions of the Software.
-
- *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
- */
-
-
 package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
@@ -35,12 +12,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-/*
- * This file includes a teleop (driver-controlled) file for the goBILDA® Robot in 3 Days for the
- * 2025-2026 FIRST® Tech Challenge season DECODE™!
- */
-
-@TeleOp(name = "XAI Kids Bot Red", group = "StarterBot")
+@TeleOp(name = "Turret Bot", group = "SecondBot")
 //@Disabled
 public class XAIKidsBotRed extends OpMode {
     final double FEED_TIME_SECONDS = 1.00; //The feeder servos run this long when a shot is requested.
@@ -56,23 +28,18 @@ public class XAIKidsBotRed extends OpMode {
     double launcherTarget = LAUNCHER_CLOSE_TARGET_VELOCITY; //These variables allow
     double launcherMin = LAUNCHER_CLOSE_MIN_VELOCITY;
 
-    final double LEFT_POSITION = 0.05; //the left and right position for the diverter servo
-    final double RIGHT_POSITION = 0;
-
     // Declare OpMode members.
     private DcMotor leftFrontDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor leftBackDrive = null;
     private DcMotor rightBackDrive = null;
-    private DcMotorEx leftLauncher = null;
-    private DcMotorEx rightLauncher = null;
+    private DcMotorEx topLauncher = null;
+    private DcMotorEx bottomLauncher = null;
     private DcMotor intake = null;
-    private CRServo leftFeeder = null;
-    private CRServo rightFeeder = null;
-    private Servo diverter = null;
+    private DcMotor Feeder = null;
 
-    ElapsedTime leftFeederTimer = new ElapsedTime();
-    ElapsedTime rightFeederTimer = new ElapsedTime();
+    ElapsedTime TopFeederTimer = new ElapsedTime();
+
 
 
     private enum LaunchState {
@@ -81,14 +48,9 @@ public class XAIKidsBotRed extends OpMode {
         LAUNCH,
         LAUNCHING,
     }
-    private LaunchState leftLaunchState;
-    private LaunchState rightLaunchState;
+    private LaunchState topLaunchState;
+    private LaunchState bottomLaunchState;
 
-    private enum DiverterDirection {
-        LEFT,
-        RIGHT;
-    }
-    private DiverterDirection diverterDirection = DiverterDirection.LEFT;
 
     private enum IntakeState {
         ON,
@@ -110,9 +72,9 @@ public class XAIKidsBotRed extends OpMode {
     double leftBackPower;
     double rightBackPower;
 
-    /*
-     * Code to run ONCE when the driver hits INIT
-     */
+/*
+ * Code to run ONCE when the driver hits INIT
+ */
     @Override
     public void init() {
         leftLaunchState = LaunchState.IDLE;
@@ -122,12 +84,10 @@ public class XAIKidsBotRed extends OpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
-        leftLauncher = hardwareMap.get(DcMotorEx.class, "left_launcher");
-        rightLauncher = hardwareMap.get(DcMotorEx.class, "right_launcher");
+        topLauncher = hardwareMap.get(DcMotorEx.class, "top_launcher");
+        bottomLauncher = hardwareMap.get(DcMotorEx.class, "bottom_launcher");
         intake = hardwareMap.get(DcMotor.class, "intake");
-        leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
-        rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
-        diverter = hardwareMap.get(Servo.class, "diverter");
+        leftFeeder = hardwareMap.get(DcMtor.class, "left_feeder");
 
         /*
          * To drive forward, most robots need the motor on one side to be reversed,
@@ -142,12 +102,12 @@ public class XAIKidsBotRed extends OpMode {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         //leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
+        bottomLauncher.setDirection(DcMotorEx.Direction.REVERSE);
 
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        leftLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        rightLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
@@ -158,24 +118,24 @@ public class XAIKidsBotRed extends OpMode {
         rightFrontDrive.setZeroPowerBehavior(BRAKE);
         leftBackDrive.setZeroPowerBehavior(BRAKE);
         rightBackDrive.setZeroPowerBehavior(BRAKE);
-        leftLauncher.setZeroPowerBehavior(BRAKE);
-        rightLauncher.setZeroPowerBehavior(BRAKE);
+        topLauncher.setZeroPowerBehavior(BRAKE);
+        bottomLauncher.setZeroPowerBehavior(BRAKE);
 
         /*
          * set Feeders to an initial value to initialize the servo controller
          */
-        leftFeeder.setPower(STOP_SPEED);
-        rightFeeder.setPower(STOP_SPEED);
+        Feeder.setZeroPowerBehavior(Brake);
 
-        leftLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
-        rightLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
+
+        topLauncher.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
+        bottomLauncher.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
 
         /*
          * Much like our drivetrain motors, we set the left feeder servo to reverse so that they
          * both work to feed the ball into the robot.
          */
-        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        //leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        Feeder.setDirection(DcMotorSimple.Direction.FORWARD);
 
         /*
          * Tell the driver that initialization is complete.
@@ -210,14 +170,14 @@ public class XAIKidsBotRed extends OpMode {
          * queuing a shot.
          */
         if (gamepad1.y) {
-            leftLauncher.setVelocity(launcherTarget);
-            rightLauncher.setVelocity(launcherTarget);
+            topLauncher.setVelocity(launcherTarget);
+            bottomLauncher.setVelocity(launcherTarget);
         } else if (gamepad1.b) { // stop flywheel
-            leftLauncher.setVelocity(STOP_SPEED);
-            rightLauncher.setVelocity(STOP_SPEED);
+            topLauncher.setVelocity(STOP_SPEED);
+            bottomLauncher.setVelocity(STOP_SPEED);
         }
 
-        if (gamepad1.dpadDownWasPressed()) {
+ /*       if (gamepad1.dpadDownWasPressed()) {
             switch (diverterDirection){
                 case LEFT:
                     telemetry.addData("Diverter-Left", diverter.getPosition());
@@ -235,7 +195,7 @@ public class XAIKidsBotRed extends OpMode {
                     diverter.setPosition(RIGHT_POSITION);
             }
         }
-
+*/
         if (gamepad1.aWasPressed()){
             switch (intakeState){
                 case ON:
@@ -267,16 +227,16 @@ public class XAIKidsBotRed extends OpMode {
         /*
          * Now we call our "Launch" function.
          */
-        launchLeft(gamepad1.leftBumperWasPressed());
-        launchRight(gamepad1.rightBumperWasPressed());
+        launchTop(gamepad1.leftBumperWasPressed());
+        launchBottom(gamepad1.leftBumperWasPressed());
 
         /*
          * Show the state and motor powers
          */
         telemetry.addData("State", leftLaunchState);
         telemetry.addData("launch distance", launcherDistance);
-        telemetry.addData("Left Launcher Velocity", leftLauncher.getVelocity());
-        telemetry.addData("Right Launcher Velocity", rightLauncher.getVelocity());
+        telemetry.addData("Top Launcher Velocity", topLauncher.getVelocity());
+        telemetry.addData("Bottom Launcher Velocity", bottomLauncher.getVelocity());
 
     }
 
@@ -307,57 +267,57 @@ public class XAIKidsBotRed extends OpMode {
 
     }
 
-    void launchLeft(boolean shotRequested) {
-        switch (leftLaunchState) {
+    void launchTop(boolean shotRequested) {
+        switch (topLaunchState) {
             case IDLE:
                 if (shotRequested) {
-                    leftLaunchState = LaunchState.SPIN_UP;
+                    topLaunchState = LaunchState.SPIN_UP;
                 }
                 break;
             case SPIN_UP:
-                leftLauncher.setVelocity(launcherTarget);
-                rightLauncher.setVelocity(launcherTarget);
-                if (leftLauncher.getVelocity() > launcherMin) {
-                    leftLaunchState = LaunchState.LAUNCH;
+                topLauncher.setVelocity(launcherTarget);
+                bottomLauncher.setVelocity(launcherTarget);
+                if (topLauncher.getVelocity() > launcherMin) {
+                    topLaunchState = LaunchState.LAUNCH;
                 }
                 break;
             case LAUNCH:
-                leftFeeder.setPower(FULL_SPEED);
-                leftFeederTimer.reset();
-                leftLaunchState = LaunchState.LAUNCHING;
+                Feeder.setPower(FULL_SPEED);
+                FeederTimer.reset();
+                topLaunchState = LaunchState.LAUNCHING;
                 break;
             case LAUNCHING:
-                if (leftFeederTimer.seconds() > FEED_TIME_SECONDS) {
-                    leftLaunchState = LaunchState.IDLE;
-                    leftFeeder.setPower(STOP_SPEED);
+                if (FeederTimer.seconds() > FEED_TIME_SECONDS) {
+                    topLaunchState = LaunchState.IDLE;
+                    Feeder.setPower(STOP_SPEED);
                 }
                 break;
         }
     }
 
-    void launchRight(boolean shotRequested) {
-        switch (rightLaunchState) {
+    void launchBottom(boolean shotRequested) {
+        switch (bottomLaunchState) {
             case IDLE:
                 if (shotRequested) {
-                    rightLaunchState = LaunchState.SPIN_UP;
+                    bottomLaunchState = LaunchState.SPIN_UP;
                 }
                 break;
             case SPIN_UP:
-                leftLauncher.setVelocity(launcherTarget);
-                rightLauncher.setVelocity(launcherTarget);
-                if (rightLauncher.getVelocity() > launcherMin) {
-                    rightLaunchState = LaunchState.LAUNCH;
+                topLauncher.setVelocity(launcherTarget);
+                bottomLauncher.setVelocity(launcherTarget);
+                if (bottomLauncher.getVelocity() > launcherMin) {
+                    bottomLaunchState = LaunchState.LAUNCH;
                 }
                 break;
             case LAUNCH:
-                rightFeeder.setPower(FULL_SPEED);
-                rightFeederTimer.reset();
-                rightLaunchState = LaunchState.LAUNCHING;
+                Feeder.setPower(FULL_SPEED);
+                FeederTimer.reset();
+                bottomLaunchState = LaunchState.LAUNCHING;
                 break;
             case LAUNCHING:
-                if (rightFeederTimer.seconds() > FEED_TIME_SECONDS) {
-                    rightLaunchState = LaunchState.IDLE;
-                    rightFeeder.setPower(STOP_SPEED);
+                if (FeederTimer.seconds() > FEED_TIME_SECONDS) {
+                    bottomLaunchState = LaunchState.IDLE;
+                    Feeder.setPower(STOP_SPEED);
                 }
                 break;
         }
