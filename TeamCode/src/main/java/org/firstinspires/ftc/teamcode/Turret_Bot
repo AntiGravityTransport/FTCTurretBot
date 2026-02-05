@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "Turret Bot", group = "SecondBot")
 //@Disabled
-public class XAIKidsBotRed extends OpMode {
+public class TeleOpMode30511 extends OpMode {
     final double FEED_TIME_SECONDS = 1.00; //The feeder servos run this long when a shot is requested.
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
     final double FULL_SPEED = 1.0;
@@ -37,8 +37,12 @@ public class XAIKidsBotRed extends OpMode {
     private DcMotorEx bottomLauncher = null;
     private DcMotor intake = null;
     private DcMotor Feeder = null;
+    private CRServo right_rotator = null;
+    private CRServo left_rotator = null;
+    private CRServo right_turret_angler = null;
+    private CRServo left_turret_angler = null;
 
-    ElapsedTime TopFeederTimer = new ElapsedTime();
+    ElapsedTime FeederTimer = new ElapsedTime();
 
 
 
@@ -72,13 +76,13 @@ public class XAIKidsBotRed extends OpMode {
     double leftBackPower;
     double rightBackPower;
 
-/*
- * Code to run ONCE when the driver hits INIT
- */
+    /*
+     * Code to run ONCE when the driver hits INIT
+     */
     @Override
     public void init() {
-        leftLaunchState = LaunchState.IDLE;
-        rightLaunchState = LaunchState.IDLE;
+        topLaunchState = LaunchState.IDLE;
+        bottomLaunchState = LaunchState.IDLE;
 
         leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
@@ -87,7 +91,11 @@ public class XAIKidsBotRed extends OpMode {
         topLauncher = hardwareMap.get(DcMotorEx.class, "top_launcher");
         bottomLauncher = hardwareMap.get(DcMotorEx.class, "bottom_launcher");
         intake = hardwareMap.get(DcMotor.class, "intake");
-        leftFeeder = hardwareMap.get(DcMtor.class, "left_feeder");
+        Feeder = hardwareMap.get(DcMotor.class, "feeder");
+        right_rotator = hardwareMap.get(CRServo.class, "right_rotator");
+        left_rotator = hardwareMap.get(CRServo.class, "left_rotator");
+        right_turret_angler = hardwareMap.get(CRServo.class, "right_turret_angler");
+        left_turret_angler = hardwareMap.get(CRServo.class, "left_turret_angler");
 
         /*
          * To drive forward, most robots need the motor on one side to be reversed,
@@ -101,13 +109,13 @@ public class XAIKidsBotRed extends OpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        //leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
+        //topLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
         bottomLauncher.setDirection(DcMotorEx.Direction.REVERSE);
 
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        leftLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        rightLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        topLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        bottomLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
@@ -124,7 +132,7 @@ public class XAIKidsBotRed extends OpMode {
         /*
          * set Feeders to an initial value to initialize the servo controller
          */
-        Feeder.setZeroPowerBehavior(Brake);
+        Feeder.setZeroPowerBehavior(BRAKE);
 
 
         topLauncher.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
@@ -224,16 +232,16 @@ public class XAIKidsBotRed extends OpMode {
             }
         }
 
-        /*
+
          * Now we call our "Launch" function.
-         */
+
         launchTop(gamepad1.leftBumperWasPressed());
         launchBottom(gamepad1.leftBumperWasPressed());
 
-        /*
+
          * Show the state and motor powers
-         */
-        telemetry.addData("State", leftLaunchState);
+
+        telemetry.addData("State", topLaunchState);
         telemetry.addData("launch distance", launcherDistance);
         telemetry.addData("Top Launcher Velocity", topLauncher.getVelocity());
         telemetry.addData("Bottom Launcher Velocity", bottomLauncher.getVelocity());
@@ -322,4 +330,5 @@ public class XAIKidsBotRed extends OpMode {
                 break;
         }
     }
+
 }
