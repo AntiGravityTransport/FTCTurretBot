@@ -27,7 +27,11 @@ public class Odometry {
     public void update() {
         pinpoint.update();
     }
-
+    // Inside Odometry.java
+    public String getStatus() {
+        // Return the status from your pinpoint driver or tracking system
+        return "OK";
+    }
     public Pose2D getPose() {
         return pinpoint.getPosition();
     }
