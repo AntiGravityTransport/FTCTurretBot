@@ -120,9 +120,11 @@ public class TeleOpMode30511 extends OpMode {
 
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        right_rotator.setDirection(CRServo.Direction.REVERSE);
+        right_turret_angler.setDirection(CRServo.Direction.REVERSE);
+
         topLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         bottomLauncher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
          * slow down much faster when it is coasting. This creates a much more controllable
