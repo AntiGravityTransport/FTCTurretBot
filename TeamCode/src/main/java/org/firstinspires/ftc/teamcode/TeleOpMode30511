@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -61,15 +63,14 @@ public class TeleOpMode30511 extends OpMode {
     private LaunchState topLaunchState;
     private LaunchState bottomLaunchState;
 
+    // Place this with your other private variables
     private enum AnglerState {
-        IDLEOG,
+        IDLE,
         UP,
-        IDLEUP,
-        DOWN,
-        IDLEDOWN;
+        DOWN;
     }
-    private AnglerState  rightangler = AnglerState.IDLEUP;
 
+    private AnglerState anglerSystemState = AnglerState.IDLE;
 
     private enum IntakeState {
         ON,
@@ -193,6 +194,10 @@ public class TeleOpMode30511 extends OpMode {
     public void loop() {
 
         mecanumDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        /* Now we call Angler Function
+
+         */
+        UpdateAngler();
 
         /*
          * Here we give the user control of the speed of the launcher motor without automatically
@@ -222,9 +227,8 @@ public class TeleOpMode30511 extends OpMode {
                     telemetry.addData("Diverter-Default", diverter.getPosition());
                     diverter.setPosition(RIGHT_POSITION);
             }
-        }
 */
-        if (gamepad1.aWasPressed()){
+        if (gamepad1.a){
             switch (intakeState){
                 case ON:
                     intakeState = IntakeState.OFF;
@@ -237,7 +241,7 @@ public class TeleOpMode30511 extends OpMode {
             }
         }
 
-        if (gamepad1.dpadUpWasPressed()) {
+        if (gamepad1.dpad_up) {
             switch (launcherDistance) {
                 case CLOSE:
                     launcherDistance = LauncherDistance.FAR;
@@ -252,13 +256,37 @@ public class TeleOpMode30511 extends OpMode {
             }
         }
 
+        void UpdateAngler{
+            if(gamepad1.dpad_up){
+                anglerSystemState = AnglerState.UP;
+            } else if (gamepad1.dpad_down) {
+                anglerSystemState = AnglerState.DOWN;
+            } else{
+                anglerSystemState = AnglerState.IDLE;
+            }
+            switch(anglerSystemState){
+                case UP:
+                    left_turret_angler.setPower(1.0);
+                    right_turret_angler.setPower(1.0);
+                    break;
+                case DOWN:
+                    left_turret_angler.setPower(-1.0);
+                    right_turret_angler.setPower(-1.0);
+                    break;
+                case IDLE:
+                    left_turret_angler.setPower(0.0);
+                    right_turret_angler.setPower(0.0);
+                    break;
+            }
+        }
+
 
          /* Now we call our "Launch" function.
 
           */
 
-        launchTop(gamepad1.leftBumperWasPressed());
-        launchBottom(gamepad1.leftBumperWasPressed());
+        launchTop(gamepad1.left_bumper);
+        launchBottom(gamepad1.left_bumper);
 
 
          /* Show the state and motor powers
@@ -362,3 +390,5 @@ public class TeleOpMode30511 extends OpMode {
     }
 
 }
+
+
