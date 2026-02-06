@@ -61,6 +61,15 @@ public class TeleOpMode30511 extends OpMode {
     private LaunchState topLaunchState;
     private LaunchState bottomLaunchState;
 
+    private enum AnglerState {
+        IDLEOG,
+        UP,
+        IDLEUP,
+        DOWN,
+        IDLEDOWN;
+    }
+    private AnglerState  rightangler = AnglerState.IDLEUP;
+
 
     private enum IntakeState {
         ON,
@@ -196,7 +205,6 @@ public class TeleOpMode30511 extends OpMode {
             topLauncher.setVelocity(STOP_SPEED);
             bottomLauncher.setVelocity(STOP_SPEED);
         }
-
  /*       if (gamepad1.dpadDownWasPressed()) {
             switch (diverterDirection){
                 case LEFT:
