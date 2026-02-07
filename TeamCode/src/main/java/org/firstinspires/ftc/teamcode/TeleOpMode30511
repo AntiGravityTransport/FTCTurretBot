@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -11,7 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 // Add these for Odometry/Pinpoint support
@@ -63,7 +60,6 @@ public class TeleOpMode30511 extends OpMode {
     private LaunchState topLaunchState;
     private LaunchState bottomLaunchState;
 
-    // Place this with your other private variables
     private enum AnglerState {
         IDLE,
         UP,
@@ -71,6 +67,14 @@ public class TeleOpMode30511 extends OpMode {
     }
 
     private AnglerState anglerSystemState = AnglerState.IDLE;
+
+    private enum RotatorState {
+        IDLE,
+        LEFT,
+        RIGHT;
+    }
+
+    private RotatorState rotatorSystemState = RotatorState.IDLE;
 
     private enum IntakeState {
         ON,
@@ -260,8 +264,7 @@ public class TeleOpMode30511 extends OpMode {
 
           */
 
-        launchTop(gamepad1.left_bumper);
-        launchBottom(gamepad1.left_bumper);
+        launchSystem(gamepad1.right_trigger > 0.1);
 
 
          /* Show the state and motor powers
@@ -308,57 +311,50 @@ public class TeleOpMode30511 extends OpMode {
 
     }
 
-    void launchTop(boolean shotRequested) {
+    void launchSystem(boolean shotRequested) {
+        // Using topLaunchState as the master state for the whole system inorder to to prevent motor confusion.
+
+        if (!shotRequested) {
+            topLaunchState = LaunchState.IDLE;
+            bottomLaunchState = LaunchState.IDLE;
+            topLauncher.setVelocity(STOP_SPEED);
+            bottomLauncher.setVelocity(STOP_SPEED);
+            Feeder.setPower(STOP_SPEED);
+            return;
+        }
+
         switch (topLaunchState) {
             case IDLE:
                 if (shotRequested) {
                     topLaunchState = LaunchState.SPIN_UP;
+                    bottomLaunchState = LaunchState.SPIN_UP;
                 }
                 break;
+
             case SPIN_UP:
+                // Spin up both motors
                 topLauncher.setVelocity(launcherTarget);
                 bottomLauncher.setVelocity(launcherTarget);
-                if (topLauncher.getVelocity() > launcherMin) {
+
+                // Only move to LAUNCH if BOTH motors are fast enough
+                if (topLauncher.getVelocity() > launcherMin && bottomLauncher.getVelocity() > launcherMin) {
                     topLaunchState = LaunchState.LAUNCH;
+                    bottomLaunchState = LaunchState.LAUNCH;
                 }
                 break;
+
             case LAUNCH:
                 Feeder.setPower(FULL_SPEED);
                 FeederTimer.reset();
                 topLaunchState = LaunchState.LAUNCHING;
-                break;
-            case LAUNCHING:
-                if (FeederTimer.seconds() > FEED_TIME_SECONDS) {
-                    topLaunchState = LaunchState.IDLE;
-                    Feeder.setPower(STOP_SPEED);
-                }
-                break;
-        }
-    }
-
-    void launchBottom(boolean shotRequested) {
-        switch (bottomLaunchState) {
-            case IDLE:
-                if (shotRequested) {
-                    bottomLaunchState = LaunchState.SPIN_UP;
-                }
-                break;
-            case SPIN_UP:
-                topLauncher.setVelocity(launcherTarget);
-                bottomLauncher.setVelocity(launcherTarget);
-                if (bottomLauncher.getVelocity() > launcherMin) {
-                    bottomLaunchState = LaunchState.LAUNCH;
-                }
-                break;
-            case LAUNCH:
-                Feeder.setPower(FULL_SPEED);
-                FeederTimer.reset();
                 bottomLaunchState = LaunchState.LAUNCHING;
                 break;
+
             case LAUNCHING:
                 if (FeederTimer.seconds() > FEED_TIME_SECONDS) {
-                    bottomLaunchState = LaunchState.IDLE;
                     Feeder.setPower(STOP_SPEED);
+                    topLaunchState = LaunchState.IDLE;
+                    bottomLaunchState = LaunchState.IDLE;
                 }
                 break;
         }
