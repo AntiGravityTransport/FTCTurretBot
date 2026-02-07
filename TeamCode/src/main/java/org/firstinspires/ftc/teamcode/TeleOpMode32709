@@ -36,7 +36,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
- * This file includes a teleop (driver-controlled) file for the goBILDA® Robot in 3 Days for the
+ * This file includes a teleop (driver-controlled) file for the go BILDA® Robot in 3 Days for the
  * 2025-2026 FIRST® Tech Challenge season DECODE™!
  */
 
@@ -86,20 +86,20 @@ public class TeleOpMode32709 extends OpMode {
 
     private enum DiverterDirection {
         LEFT,
-        RIGHT;
+        RIGHT
     }
     private DiverterDirection diverterDirection = DiverterDirection.LEFT;
 
     private enum IntakeState {
         ON,
-        OFF;
+        OFF
     }
 
     private IntakeState intakeState = IntakeState.OFF;
 
     private enum LauncherDistance {
         CLOSE,
-        FAR;
+        FAR
     }
 
     private LauncherDistance launcherDistance = LauncherDistance.CLOSE;
@@ -217,7 +217,7 @@ public class TeleOpMode32709 extends OpMode {
             rightLauncher.setVelocity(STOP_SPEED);
         }
 
-        if (gamepad1.dpadDownWasPressed()) {
+        if (gamepad1.dpad_down) {
             switch (diverterDirection){
                 case LEFT:
                     telemetry.addData("Diverter-Left", diverter.getPosition());
@@ -236,7 +236,7 @@ public class TeleOpMode32709 extends OpMode {
             }
         }
 
-        if (gamepad1.aWasPressed()){
+        if (gamepad1.a){
             switch (intakeState){
                 case ON:
                     intakeState = IntakeState.OFF;
@@ -249,7 +249,7 @@ public class TeleOpMode32709 extends OpMode {
             }
         }
 
-        if (gamepad1.dpadUpWasPressed()) {
+        if (gamepad1.dpad_up) {
             switch (launcherDistance) {
                 case CLOSE:
                     launcherDistance = LauncherDistance.FAR;
@@ -267,8 +267,8 @@ public class TeleOpMode32709 extends OpMode {
         /*
          * Now we call our "Launch" function.
          */
-        launchLeft(gamepad1.leftBumperWasPressed());
-        launchRight(gamepad1.rightBumperWasPressed());
+        launchLeft(gamepad1.left_bumper);
+        launchRight(gamepad1.right_bumper);
 
         /*
          * Show the state and motor powers
