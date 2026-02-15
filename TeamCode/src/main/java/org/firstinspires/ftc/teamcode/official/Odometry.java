@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.official;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -25,6 +25,7 @@ public class Odometry {
     }
 
     public void update() {
+
         pinpoint.update();
     }
     // Inside Odometry.java

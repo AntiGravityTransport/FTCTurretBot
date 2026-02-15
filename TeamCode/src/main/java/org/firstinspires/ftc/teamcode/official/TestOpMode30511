@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.official;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
@@ -16,9 +16,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
+
 @TeleOp(name = "Turret Bot", group = "SecondBot")
 //@Disabled
-public class TeleOpMode30511 extends OpMode {
+public class TestOpMode30511 extends OpMode {
     final double FEED_TIME_SECONDS = 1.00; //The feeder servos run this long when a shot is requested.
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
     final double FULL_SPEED = 1.0;
@@ -62,12 +63,10 @@ public class TeleOpMode30511 extends OpMode {
         LAUNCH,
         LAUNCHING,
     }
-    private LaunchState topLaunchState;
-    private LaunchState bottomLaunchState;
 
     private LaunchState launchBallState;
 
-    private enum AnglerState {
+    public enum AnglerState {
         IDLE,
         UP,
         DOWN;
@@ -108,8 +107,7 @@ public class TeleOpMode30511 extends OpMode {
      */
     @Override
     public void init() {
-        topLaunchState = LaunchState.IDLE;
-        bottomLaunchState = LaunchState.IDLE;
+        launchBallState = LaunchState.IDLE;
 
         leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
@@ -137,10 +135,8 @@ public class TeleOpMode30511 extends OpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        //topLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
         topLauncher.setDirection(DcMotorEx.Direction.REVERSE);
 
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         right_rotator.setDirection(CRServo.Direction.FORWARD);
         left_rotator.setDirection(CRServo.Direction.FORWARD);
@@ -217,12 +213,28 @@ public class TeleOpMode30511 extends OpMode {
          * Here we give the user control of the speed of the launcher motor without automatically
          * queuing a shot.
          */
-        if (gamepad1.y) {
-            topLauncher.setVelocity(launcherTarget);
-            bottomLauncher.setVelocity(launcherTarget);
-        } else if (gamepad1.b) { // stop flywheel
-            topLauncher.setVelocity(STOP_SPEED);
-            bottomLauncher.setVelocity(STOP_SPEED);
+
+        // Emergency stop FIRST (works regardless of state)
+        if (gamepad1.b) {
+            topLauncher.setPower(0);
+            bottomLauncher.setPower(0);
+            topLauncher.setVelocity(0);
+            bottomLauncher.setVelocity(0);
+
+            Feeder.setPower(0);
+            launchBallState = LaunchState.IDLE;
+            intake.setPower(0); intakeState = IntakeState.OFF;
+            spinUpTimer.reset();
+            FeederTimer.reset();
+            return;
+        }
+
+        // Manual flywheel spin-up only when not actively launching
+        if (launchBallState == LaunchState.IDLE) {
+            if (gamepad1.y) {
+                topLauncher.setVelocity(launcherTarget);
+                bottomLauncher.setVelocity(launcherTarget);
+            }
         }
  /*       if (gamepad1.dpadDownWasPressed()) {
             switch (diverterDirection){
@@ -274,18 +286,21 @@ public class TeleOpMode30511 extends OpMode {
          /* Now we call our "Launch" function.
 
           */
-
-        launchSystem(gamepad1.right_trigger > 0.1);
-
+        boolean manualFeed = gamepad1.left_bumper;                 // Option A: hold to feed
+        boolean shotRequested = gamepad1.right_bumper;  // tap to shoot
+        launchBall(shotRequested, manualFeed);
 
          /* Show the state and motor powers
 
           */
 
-        telemetry.addData("State", topLaunchState);
+        telemetry.addData("State", launchBallState);
         telemetry.addData("launch distance", launcherDistance);
         telemetry.addData("Top Launcher Velocity", topLauncher.getVelocity());
         telemetry.addData("Bottom Launcher Velocity", bottomLauncher.getVelocity());
+        telemetry.addData("ManualFeed", manualFeedHeld);
+        telemetry.addData("TimedFeed", timedFeedActive);
+        telemetry.addData("FeederRunning", feederShouldRun);
 
         Pose2D pos = robotOdometry.getPose();
         telemetry.addData("X (mm)", pos.getX(DistanceUnit.MM));
@@ -321,54 +336,48 @@ public class TeleOpMode30511 extends OpMode {
         rightBackDrive.setPower(rightBackPower);
 
     }
+    void launchBall(boolean shotRequested, boolean manualFeed) {
 
-    void launchSystem(boolean shotRequested) {
-        // Using topLaunchState as the master state for the whole system inorder to to prevent motor confusion.
+        manualFeedHeld = manualFeed;
 
-        if (!shotRequested) {
-            topLaunchState = LaunchState.IDLE;
-            bottomLaunchState = LaunchState.IDLE;
-            topLauncher.setVelocity(STOP_SPEED);
-            bottomLauncher.setVelocity(STOP_SPEED);
-            Feeder.setPower(STOP_SPEED);
-            return;
-        }
-
-        switch (topLaunchState) {
+        switch (launchBallState) {
             case IDLE:
                 if (shotRequested) {
-                    topLaunchState = LaunchState.SPIN_UP;
-                    bottomLaunchState = LaunchState.SPIN_UP;
+                    spinUpTimer.reset();
+                    launchBallState = LaunchState.SPIN_UP;
                 }
                 break;
 
             case SPIN_UP:
-                // Spin up both motors
                 topLauncher.setVelocity(launcherTarget);
                 bottomLauncher.setVelocity(launcherTarget);
-
-                // Only move to LAUNCH if BOTH motors are fast enough
-                if (topLauncher.getVelocity() > launcherMin && bottomLauncher.getVelocity() > launcherMin) {
-                    topLaunchState = LaunchState.LAUNCH;
-                    bottomLaunchState = LaunchState.LAUNCH;
+                if (topLauncher.getVelocity() > launcherMin &&
+                        bottomLauncher.getVelocity() > launcherMin) {
+                    launchBallState = LaunchState.LAUNCH;
+                } else if (spinUpTimer.seconds() > SPINUP_TIMEOUT) {
+                    launchBallState = LaunchState.IDLE;
                 }
                 break;
 
             case LAUNCH:
-                Feeder.setPower(FULL_SPEED);
                 FeederTimer.reset();
-                topLaunchState = LaunchState.LAUNCHING;
-                bottomLaunchState = LaunchState.LAUNCHING;
+                launchBallState = LaunchState.LAUNCHING;
                 break;
 
             case LAUNCHING:
                 if (FeederTimer.seconds() > FEED_TIME_SECONDS) {
-                    Feeder.setPower(STOP_SPEED);
-                    topLaunchState = LaunchState.IDLE;
-                    bottomLaunchState = LaunchState.IDLE;
+                    launchBallState = LaunchState.IDLE;
                 }
                 break;
         }
+
+        timedFeedActive =
+                (launchBallState == LaunchState.LAUNCHING) &&
+                        (FeederTimer.seconds() <= FEED_TIME_SECONDS);
+
+        feederShouldRun = manualFeedHeld || timedFeedActive;
+
+        Feeder.setPower(feederShouldRun ? FULL_SPEED : STOP_SPEED);
     }
      void UpdateAngler(){
         if(gamepad1.dpad_up){

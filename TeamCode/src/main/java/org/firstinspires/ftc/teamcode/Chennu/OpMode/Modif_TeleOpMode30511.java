@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Chennu.OpMode;
+/*/*package org.firstinspires.ftc.teamcode.Chennu.OpMode;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -9,8 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.teamcode.TeleOpMode30511;
 
 // Add these for Odometry/Pinpoint support
 
@@ -96,7 +94,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
     /*
      * Code to run ONCE when the driver hits INIT
      */
-    @Override
+ /*   @Override
     public void init() {
         launchBallState = LaunchState.IDLE;
 
@@ -120,7 +118,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
          * MUST make robot go forward. So adjust these two lines based on your first test drive.
          * Note: The settings here assume direct drive on left and right wheels. Gear
          * Reduction or 90 Deg drives may require direction flips
-         */
+
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -140,7 +138,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
          * slow down much faster when it is coasting. This creates a much more controllable
          * drivetrain. As the robot stops much quicker.
-         */
+
         leftFrontDrive.setZeroPowerBehavior(BRAKE);
         rightFrontDrive.setZeroPowerBehavior(BRAKE);
         leftBackDrive.setZeroPowerBehavior(BRAKE);
@@ -150,7 +148,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
 
         /*
          * set Feeders to an initial value to initialize the servo controller
-         */
+
         feeder.setZeroPowerBehavior(BRAKE);
 
 
@@ -160,7 +158,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
         /*
          * Much like our drivetrain motors, we set the left feeder servo to reverse so that they
          * both work to feed the ball into the robot.
-         */
+
         //leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
         feeder.setDirection(DcMotorSimple.Direction.FORWARD);
 
@@ -170,20 +168,20 @@ public class Modif_TeleOpMode30511 extends OpMode {
         //robotOdometry = new Odometry(hardwareMap);
         /*
          * Tell the driver that initialization is complete.
-         */
+
         telemetry.addData("Status", "Initialized");
     }
 
     /*
      * Code to run REPEATEDLY after the driver hits INIT, but before they hit START
-     */
+
     @Override
     public void init_loop() {
     }
 
     /*
      * Code to run ONCE when the driver hits START
-     */
+
     @Override
     public void start() {
     }
@@ -214,7 +212,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
 
     /*
      * Code to run REPEATEDLY after the driver hits START but before they hit STOP
-     */
+
     @Override
     public void loop() {
 
@@ -283,7 +281,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
 
     /*
      * Code to run ONCE after the driver hits STOP
-     */
+
     @Override
     public void stop() {
     }
@@ -293,7 +291,7 @@ public class Modif_TeleOpMode30511 extends OpMode {
         /* the denominator is the largest motor power (absolute value) or 1
          * This ensures all the powers maintain the same ratio,
          * but only if at least one is out of the range [-1, 1]
-         */
+
         double denominator = Math.max(Math.abs(forward) + Math.abs(strafe) + Math.abs(rotate), 1);
 
         leftFrontPower = (forward + strafe + rotate) / denominator;
